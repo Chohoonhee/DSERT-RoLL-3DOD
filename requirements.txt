@@ -1,0 +1,26 @@
+# Pin opencv to the last pre-built wheel for Python 3.6 (the project's
+# pinned interpreter). Without this pin, pip falls back to a source build
+# that fails and rolls back the whole install.
+opencv-python==4.6.0.66
+opencv-python-headless==4.6.0.66
+
+# pickle5 is needed because some label.pkl files in the dataset use
+# pickle protocol 5, which Python 3.6 stdlib pickle does not support.
+pickle5
+
+# pycocotools is a transitive dep of vendored mmdet (used by mask utils).
+pycocotools
+
+numpy
+numba
+tensorboardX
+easydict
+pyyaml
+scikit-image
+tqdm
+pandas
+tabulate
+SharedArray
+icecream
+kornia
+torch_scatter

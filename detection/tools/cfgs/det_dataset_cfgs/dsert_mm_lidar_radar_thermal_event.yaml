@@ -1,0 +1,134 @@
+DATASET: 'DSERTTrainingDataset'
+DATA_PATH: '../data/dsert-roll'
+PROCESSED_DATA_TAG: 'processed_data'
+
+# POINT_CLOUD_RANGE: [-75.2, -75.2, -2, 75.2, 75.2, 4]
+
+# POINT_CLOUD_RANGE: [0, -75.2, -2, 75.2, 75.2, 4]
+# POINT_CLOUD_RANGE: [0, -75.2, -2, 15.2, 75.2, 4]
+POINT_CLOUD_RANGE: [0, -76.8, -2, 76.8, 76.8, 4]
+
+
+DATA_SPLIT: {
+    'train': train,
+    'test': val
+}
+
+SAMPLED_INTERVAL: {
+    'train': 1,
+    'test': 1
+}
+
+SWEEP_COUNT: [0, 0]
+TTA: False
+USE_IMAGE: True
+IMAGE_SCALE: {'camera_0': 0.25, 'camera_1': 1.0, 'camera_2': 0.5}
+
+
+
+DATA_AUGMENTOR:
+    # DISABLE_AUG_LIST: ['placeholder', 'gt_sampling', 'random_world_flip', 'random_world_rotation', 'random_world_scaling', 'random_world_translation']
+    DISABLE_AUG_LIST: ['placeholder', 'gt_sampling']
+    AUG_CONFIG_LIST:
+        - NAME: gt_sampling
+          USE_ROAD_PLANE: False
+          DB_INFO_PATH:
+              - waymo_dbinfos_train_sampled_1_sweep_1_v2.pkl
+          PREPARE: {
+             filter_by_min_points: ['Vehicle:5', 'Pedestrian:5', 'Bike:5'],
+             filter_by_difficulty: [-1],
+          }
+          NUM_POINT_FEATURES: 6
+          SAMPLE_GROUPS: ['Vehicle:15', 'Pedestrian:10', 'Bike:10']
+          REMOVE_EXTRA_WIDTH: [0.0, 0.0, 0.0]
+          LIMIT_WHOLE_SCENE: True
+
+        - NAME: random_world_flip
+          # ALONG_AXIS_LIST: ['x', 'y']
+          ALONG_AXIS_LIST: ['x'] 
+          RETURN_NOISE_FLIP: True
+
+        - NAME: random_world_rotation
+          WORLD_ROT_ANGLE: [-0.78539816, 0.78539816]
+          RETURN_NOISE_ROTATE: True
+
+        - NAME: random_world_scaling
+          WORLD_SCALE_RANGE: [0.95, 1.05]
+          RETURN_NOISE_SCALE: True
+
+        - NAME: random_world_translation
+          STD: 0.5
+          RETURN_NOISE_TRANSLATION: True
+
+POINT_FEATURE_ENCODING: {
+    encoding_type: absolute_coordinates_encoding,
+    used_feature_list: ['x', 'y', 'z', 'intensity'],
+    src_feature_list: ['x', 'y', 'z', 'intensity'],
+}
+
+RADAR_POINT_FEATURE_ENCODING:
+  encoding_type: absolute_coordinates_encoding
+  src_feature_list:  ['x','y','z', 'doppler']
+  used_feature_list: ['x','y','z', 'doppler']
+
+
+
+DATA_PROCESSOR:
+    - NAME: mask_points_and_boxes_outside_range
+      REMOVE_OUTSIDE_BOXES: True
+      POINTS_KEY: points
+
+    - NAME: shuffle_points
+      SHUFFLE_ENABLED: {
+        'train': True,
+        'test': False
+      }
+      POINTS_KEY: points
+
+    - NAME: transform_points_to_voxels
+      POINTS_KEY: points
+      VOXELS_KEY: voxels
+      VOXEL_COORDS_KEY: voxel_coords
+      VOXEL_NUM_POINTS_KEY: voxel_num_points
+      NUM_FEATURES: 4
+      VOXEL_SIZE: [0.2, 0.2, 0.15]
+      MAX_POINTS_PER_VOXEL: 2
+      MAX_NUMBER_OF_VOXELS: {
+        'train': 150000,  # [origin] train=150000, test=200000
+        'test': 200000
+      }
+
+    - NAME: generate_voxel_coords
+      VOXEL_SIZE: [0.8, 0.8, 1.2]
+      POINTS_KEY: points
+      VOXEL_COORDS_KEY: voxel_coords_downscale
+      MAX_POINTS_PER_VOXEL: 2
+      MAX_NUMBER_OF_VOXELS: {
+        'train': 150000,  # [origin] train=150000, test=200000
+        'test': 200000
+      }
+
+    - NAME: mask_points_and_boxes_outside_range
+      POINTS_KEY: points_radar
+      REMOVE_OUTSIDE_BOXES: True       # RADAR은 보통 box 클리핑 비권장
+
+    - NAME: shuffle_points
+      POINTS_KEY: points_radar
+      SHUFFLE_ENABLED: { 'train': True, 'test': False }
+
+    - NAME: transform_points_to_voxels
+      POINTS_KEY: points_radar
+      VOXELS_KEY: voxels_radar
+      VOXEL_COORDS_KEY: voxel_coords_radar
+      VOXEL_NUM_POINTS_KEY: voxel_num_points_radar
+      NUM_FEATURES: 4                   # RADAR C=6
+      VOXEL_SIZE: [0.2, 0.2, 0.15]
+      MAX_POINTS_PER_VOXEL: 2
+      MAX_NUMBER_OF_VOXELS: {
+        'train': 150000,  # [origin] train=150000, test=200000
+        'test': 200000
+      }
+
+
+    - NAME: pad_image
+      TARGET_SHAPE: [[480, 320]]

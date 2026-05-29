@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+build/
+dist/
+.eggs/
+
+# Outputs / large artifacts
+detection/output/
+detection/checkpoints/*.pth
+detection/checkpoints/*.ckpt
+
+# Dataset (download separately; see README)
+detection/data/dsert-roll
+detection/data/dsert-roll-sample
+
+# Logs / temp
+*.log
+*.tmp
+*.swp
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+
+# Compiled CUDA extensions (built locally via setup.py)
+detection/al3d_det/models/ops/*.so
+utils/al3d_utils/ops/**/*.so
