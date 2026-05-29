@@ -48,12 +48,16 @@ cd DSERT-RoLL-3DOD
 # 2. symlink the DSERT-RoLL dataset (downloaded from the project page)
 ln -s /absolute/path/to/dsert_roll detection/data/dsert-roll
 
-# 3. download the pre-trained checkpoint from Hugging Face
+# 3. pre-process event voxel grids (one-time, ~tens of GB extra disk)
+python detection/tools/preprocess_event_voxel.py \
+    --data-root detection/data/dsert-roll/processed_data --side L --workers 8
+
+# 4. download the pre-trained checkpoint from Hugging Face
 mkdir -p detection/checkpoints
 wget -O detection/checkpoints/checkpoint_epoch_20.pth \
     https://huggingface.co/HoonheeCho/DSERT-RoLL-3DOD/resolve/main/checkpoint_epoch_20.pth
 
-# 4. run evaluation (2 GPUs example)
+# 5. run evaluation (2 GPUs example)
 cd detection/tools
 bash scripts/dist_test.sh 0,1 2 \
     --cfg_file cfgs/det_model_cfgs/dsert/ours.yaml \
@@ -118,9 +122,12 @@ DCN op. On success the helper script prints `Install OK`.
 
 ## Dataset
 
+### 1. Download and symlink
+
 Download the DSERT-RoLL dataset from the
-[project page](https://jeongyh98.github.io/dsert-roll) and symlink it
-under `detection/data/`:
+[project page](https://jeongyh98.github.io/dsert-roll) (or the dataset
+repo at [jeongyh98/DSERT-RoLL-Dataset](https://github.com/jeongyh98/DSERT-RoLL-Dataset))
+and symlink it under `detection/data/`:
 
 ```bash
 ln -s /absolute/path/to/dsert_roll detection/data/dsert-roll
@@ -132,19 +139,49 @@ The dataset ships with this layout:
 dsert_roll/
 ├── ImageSets/final/{train,val}.txt    # split files (sequence per line)
 └── processed_data/
-    ├── Clear/<sequence>/{label.pkl, livox/, radar/, RGB_L/, ...}
-    ├── Fog/<sequence>/...
-    ├── Light_Rain/<sequence>/...
-    ├── Heavy_Rain/<sequence>/...
-    ├── Light_Snow/<sequence>/...
-    └── Heavy_Snow/<sequence>/...
+    └── <Weather>/<sequence>/
+        ├── label.pkl                            # GT boxes + meta
+        ├── LIDAR_LIVOX_Tilted/0000.npy, ...     # Long-range LiDAR (used)
+        ├── LIDAR_OUSTER_Tilted_90_degree/...    # Short-range LiDAR
+        ├── RADAR_Tilted/0000.npy, ...           # 4D Radar (used)
+        ├── rectified_crop_RGB_L/0000.jpg, ...   # Stereo RGB (left used)
+        ├── rectified_crop_RGB_R/...
+        ├── rectified_THERMAL_L/0000.png, ...    # Stereo Thermal (left used)
+        ├── rectified_THERMAL_R/...
+        ├── rectified_EVENT_L/0000.npz, ...      # Raw stereo events
+        └── rectified_EVENT_R/...
 ```
+
+Weather folders are `Clear`, `Fog`, `Light_Rain`, `Heavy_Rain`,
+`Light_Snow`, `Heavy_Snow`.
 
 **Annotations.** Each sequence's `label.pkl` is a dict with
 `meta` (calibration, `weather`, `light`) and per-frame `info`
 (timestamps, sensor file paths, pose, and 3D `annos`). See
 [`dsert_dataset.py`](detection/al3d_det/datasets/dsert/dsert_dataset.py)
 for the exact schema.
+
+### 2. Pre-process event voxel grids (one-time)
+
+The released dataset stores **raw event streams** under
+`rectified_EVENT_L/`, but our model consumes pre-computed 5-bin
+**voxel grids** stored under `VOXEL_L/`. Generate them once before
+training or evaluation:
+
+```bash
+python detection/tools/preprocess_event_voxel.py \
+    --data-root detection/data/dsert-roll/processed_data \
+    --side L --num-bins 5 --workers 8
+```
+
+This writes `<Weather>/<sequence>/VOXEL_L/0000.npz` (shape
+`(5, 704, 1152)`, dtype `float32`) next to the raw events. The released
+checkpoint was trained with these exact defaults — do not change
+`--num-bins`, `--width`, or `--height` unless you also retrain.
+
+Pass `--side both` if you want the right event camera too (not used by
+[`ours.yaml`](detection/tools/cfgs/det_model_cfgs/dsert/ours.yaml), but
+handy for stereo-event ablations).
 
 ---
 
