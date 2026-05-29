@@ -119,11 +119,19 @@ for the exact schema.
 
 ## Pre-trained Checkpoint
 
-Download `checkpoint_epoch_20.pth` (~1.4 GB) from the
-[project page](https://jeongyh98.github.io/dsert-roll) and place it at:
+The pre-trained checkpoint (~1.4 GB) is hosted on Hugging Face:
+🤗 **[HoonheeCho/DSERT-RoLL-3DOD](https://huggingface.co/HoonheeCho/DSERT-RoLL-3DOD)**
 
-```
-detection/checkpoints/checkpoint_epoch_20.pth
+```bash
+mkdir -p detection/checkpoints
+# Option 1: direct download
+wget -O detection/checkpoints/checkpoint_epoch_20.pth \
+    https://huggingface.co/HoonheeCho/DSERT-RoLL-3DOD/resolve/main/checkpoint_epoch_20.pth
+
+# Option 2: via huggingface_hub
+pip install -U huggingface_hub
+huggingface-cli download HoonheeCho/DSERT-RoLL-3DOD checkpoint_epoch_20.pth \
+    --local-dir detection/checkpoints --local-dir-use-symlinks False
 ```
 
 ---
