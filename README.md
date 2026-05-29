@@ -35,6 +35,37 @@ module and a LoGoHead-based second-stage refinement.
 
 ---
 
+## Quick Start (evaluation only)
+
+If you just want to reproduce evaluation with the released checkpoint:
+
+```bash
+# 1. clone + install (see "Installation" below for details)
+git clone https://github.com/Chohoonhee/DSERT-RoLL-3DOD.git
+cd DSERT-RoLL-3DOD
+# ... follow steps 1-5 in "Installation" ...
+
+# 2. symlink the DSERT-RoLL dataset (downloaded from the project page)
+ln -s /absolute/path/to/dsert_roll detection/data/dsert-roll
+
+# 3. download the pre-trained checkpoint from Hugging Face
+mkdir -p detection/checkpoints
+wget -O detection/checkpoints/checkpoint_epoch_20.pth \
+    https://huggingface.co/HoonheeCho/DSERT-RoLL-3DOD/resolve/main/checkpoint_epoch_20.pth
+
+# 4. run evaluation (2 GPUs example)
+cd detection/tools
+bash scripts/dist_test.sh 0,1 2 \
+    --cfg_file cfgs/det_model_cfgs/dsert/ours.yaml \
+    --batch_size 4 \
+    --ckpt ../checkpoints/checkpoint_epoch_20.pth \
+    --extra_tag eval
+```
+
+The eval log prints **Overall / Per Weather / Per Light** AP at the end.
+
+---
+
 ## Installation
 
 Tested on Ubuntu 20.04/22.04, CUDA 11.1, **Python 3.6**, PyTorch 1.10.
@@ -157,6 +188,8 @@ Outputs land under `detection/output/det_model_cfgs/dsert/ours/<extra_tag>/`.
 
 ## Evaluation
 
+Two GPUs (default in the paper):
+
 ```bash
 cd detection/tools
 bash scripts/dist_test.sh 0,1 2 \
@@ -165,6 +198,20 @@ bash scripts/dist_test.sh 0,1 2 \
     --ckpt ../checkpoints/checkpoint_epoch_20.pth \
     --extra_tag eval
 ```
+
+Single GPU:
+
+```bash
+cd detection/tools
+bash scripts/dist_test.sh 0 1 \
+    --cfg_file cfgs/det_model_cfgs/dsert/ours.yaml \
+    --batch_size 4 \
+    --ckpt ../checkpoints/checkpoint_epoch_20.pth \
+    --extra_tag eval
+```
+
+- 1st arg: `CUDA_VISIBLE_DEVICES` (comma-separated)
+- 2nd arg: number of GPU processes
 
 Evaluation reports **Overall**, **Per Weather**, and **Per Light** AP
 using the Waymo Open Dataset official `compute_ap` API. Results and
