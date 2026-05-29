@@ -2,9 +2,9 @@
 
 **CVPR 2026** · 3D object detection
 
-[**Hoonhee Cho**](https://hoonhee.cho)\* · [**Jae-Young Kang**](#)\* · [**Yuhwan Jeong**](https://jeongyh98.github.io/)\* · Yunseo Yang · Wonyoung Lee · Youngho Kim · **Kuk-Jin Yoon**
+[**Hoonhee Cho**](https://chohoonhee.github.io/hoonheecho/)\* · [**Jae-Young Kang**](https://mickeykang16.github.io/)\* · [**Yuhwan Jeong**](https://jeongyh98.github.io/)\* · Yunseo Yang · Wonyoung Lee · Youngho Kim · [**Kuk-Jin Yoon**](https://vi.kaist.ac.kr/)
 
-Visual Intelligence Lab, KAIST · \* equal contribution
+[Visual Intelligence Lab](https://vi.kaist.ac.kr/), KAIST · \* equal contribution
 
 🌐 **[Project page](https://jeongyh98.github.io/dsert-roll)**
 
@@ -143,9 +143,7 @@ bash scripts/dist_train_mm.sh 0,1 2 \
 - `0,1` — `CUDA_VISIBLE_DEVICES`
 - `2`   — number of GPUs
 
-On 2× RTX 8000 (48 GB), one epoch ≈ 1003 iters × ~2.5 s/it;
-20 epochs ≈ 14 h. Outputs land under
-`detection/output/det_model_cfgs/dsert/ours/<extra_tag>/`.
+Outputs land under `detection/output/det_model_cfgs/dsert/ours/<extra_tag>/`.
 
 ---
 
